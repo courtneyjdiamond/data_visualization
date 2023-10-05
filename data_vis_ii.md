@@ -83,6 +83,9 @@ weather_df
     ## 10 CentralPark_NY USW00094728 2021-01-10     0   5    -1.6
     ## # ℹ 2,180 more rows
 
+This results in a dataframe with columns with 2190 observations on six
+variables.
+
 ## Sample plot from last time, but let’s change some labels.
 
 ``` r
@@ -393,3 +396,63 @@ weather_df |>
     ## Warning: Removed 17 rows containing non-finite values (`stat_ydensity()`).
 
 <img src="data_vis_ii_files/figure-gfm/unnamed-chunk-16-1.png" width="90%" />
+
+## complicated FAS plot
+
+``` r
+litters_df = 
+  read_csv("data/FAS_litters.csv") |> 
+  janitor::clean_names() |> 
+  separate(group, into = c("dose", "day_of_tx"), sep = 3)
+```
+
+    ## Rows: 49 Columns: 8
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (2): Group, Litter Number
+    ## dbl (6): GD0 weight, GD18 weight, GD of Birth, Pups born alive, Pups dead @ ...
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+pups_df = 
+  read_csv("data/FAS_pups.csv") |> 
+  janitor::clean_names()
+```
+
+    ## Rows: 313 Columns: 6
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (1): Litter Number
+    ## dbl (5): Sex, PD ears, PD eyes, PD pivot, PD walk
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+fas_df = 
+  left_join(pups_df, litters_df, by = "litter_number")
+
+fas_df |> 
+  select(dose, day_of_tx, starts_with("pd")) |> 
+  pivot_longer(
+    pd_ears:pd_walk,
+    names_to = "outcome", 
+    values_to = "pn_day"
+  ) |> 
+  drop_na() |> 
+  mutate(
+    outcome = fct_reorder(outcome, pn_day)
+  ) |> 
+  ggplot(aes(x = dose, y = pn_day)) + 
+  geom_violin() + 
+  facet_grid(day_of_tx ~ outcome)
+```
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-17-1.png" width="90%" />
+
+## A note about code reuse
+
+Always want to use the inline r functions so that if you ever update the
+data, everything will run without issue!
