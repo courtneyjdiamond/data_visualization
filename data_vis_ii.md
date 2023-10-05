@@ -22,6 +22,10 @@ library(tidyverse)
     ## ✖ dplyr::lag()    masks stats::lag()
     ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 
+``` r
+library(patchwork)
+```
+
 ## Loading data
 
 ``` r
@@ -179,3 +183,213 @@ weather_df |>
 
 So, why viridis? It works for folks with various kinds of color
 blindness, and even in grayscale!
+
+## Themes!
+
+The dafult ggplot theme has no border, scale to the right, grey
+background, etc. What if we want it to be different?
+
+``` r
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  ) +
+  viridis::scale_color_viridis(discrete = TRUE) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-7-1.png" width="90%" />
+
+Be careful with the order- the `theme_bw` is a global reset, so we want
+the fine-tuning of legend placement to come *after* it.
+
+There are some other themes too! theme_minimal() etc.
+
+## Going back to settings for the general Rmd document:
+
+``` r
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+In addition to image sizes, we can specify default settings for ggplots
+like colors and themes!
+
+## Data arguments in geom\_\*
+
+``` r
+weather_df |> 
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point() + 
+  geom_smooth()
+```
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    ## Warning: Removed 17 rows containing non-finite values (`stat_smooth()`).
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-9-1.png" width="90%" />
+
+Because we specified the color in the aesthetics of the ggplot itself,
+all of those aesthetics apply to each geom layer! If we only wanted them
+to apply to a single geom layer, we would specify them in that specific
+geom.
+
+``` r
+nyc_weather_df = 
+  weather_df |> 
+  filter(name == "CentralPark_NY")
+
+hawaii_weather_df =
+  weather_df |> 
+  filter(name == "Molokai_HI")
+
+ggplot(nyc_weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point()+
+  geom_line(data = hawaii_weather_df)
+```
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-10-1.png" width="90%" />
+
+## `patchwork`
+
+Faceting doesn’t always work- sometimes we need to display completely
+different graphs next to each other. We can use the patchwork library to
+accomplish this!!
+
+``` r
+weather_df |> 
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point() +
+  facet_grid(. ~ name) ##no facet on rows, facet on names for columns
+```
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-11-1.png" width="90%" />
+
+``` r
+ggp_temp_scatter = 
+  weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = 0.5)
+
+ggp_prcop_density = 
+  weather_df |>
+  filter(prcp > 25) |> 
+  ggplot(aes(x = prcp, fill = name)) +
+  geom_density(alpha = 0.5) + 
+  theme(legend.position = "bottom")
+
+ggp_temp_scatter + ggp_prcop_density ##can put these together using the patchwork library
+```
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-12-1.png" width="90%" />
+
+``` r
+ggp_tmax_date = 
+  weather_df |> 
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point() +
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "bottom")
+
+
+(ggp_temp_scatter + ggp_prcop_density) / ggp_tmax_date
+```
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    ## Warning: Removed 17 rows containing non-finite values (`stat_smooth()`).
+    ## Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-13-1.png" width="90%" />
+
+## Data manipulation
+
+``` r
+weather_df |> 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_boxplot()
+```
+
+    ## Warning: Removed 17 rows containing non-finite values (`stat_boxplot()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-14-1.png" width="90%" />
+
+We can see that the name variable is a character variable. ggplot always
+converts these in the background to a factor variable, which it then
+plots in alphabetical order. But sometimes we want to reorder the
+factors to get them to display in a particular order.
+
+``` r
+weather_df |> 
+  mutate(
+    name = fct_relevel(name, c("Molokai_HI", "CentralPark_NY", "Waterhole, WA"))
+  ) |> 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_boxplot()
+```
+
+    ## Warning: There was 1 warning in `mutate()`.
+    ## ℹ In argument: `name = fct_relevel(name, c("Molokai_HI", "CentralPark_NY",
+    ##   "Waterhole, WA"))`.
+    ## Caused by warning:
+    ## ! 1 unknown level in `f`: Waterhole, WA
+
+    ## Warning: Removed 17 rows containing non-finite values (`stat_boxplot()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-15-1.png" width="90%" />
+
+Another way uses “reorder”, which can order them according to some other
+variable value
+
+``` r
+weather_df |> 
+  mutate(
+    name = fct_reorder(name, tmax) 
+  ) |> 
+  ggplot(aes(x = name, y = tmax, fill = name)) + 
+  geom_violin()
+```
+
+    ## Warning: There was 1 warning in `mutate()`.
+    ## ℹ In argument: `name = fct_reorder(name, tmax)`.
+    ## Caused by warning:
+    ## ! `fct_reorder()` removing 17 missing values.
+    ## ℹ Use `.na_rm = TRUE` to silence this message.
+    ## ℹ Use `.na_rm = FALSE` to preserve NAs.
+
+    ## Warning: Removed 17 rows containing non-finite values (`stat_ydensity()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-16-1.png" width="90%" />
