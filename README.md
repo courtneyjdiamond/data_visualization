@@ -1,1 +1,1 @@
-# data_visualization
+# This repository is for the data visualization and EDA portion of the class. 
