@@ -36,5 +36,81 @@ weather_df =
 weather_df
 ```
 
+## Sample plot from last time, but let's change some labels.
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  )
+```
+
+
+## Let's start to look at scales! 
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  ) +
+  scale_x_continuous(
+    breaks = c(-15, 0, 15), 
+    labels = c("-15C", "0C", "15C")
+  ) + 
+  scale_y_continuous(
+    position = "right", 
+    trans = "sqrt", 
+    limits = c(0,30)
+  )
+```
+
+Above, we have a couple options for when/where we transform the data and limiting the data we plot. We could do this with a filter or mutate function before we plot.
+
+
+## What about colors? 
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  ) +
+  scale_color_hue(h = c(100, 200))
+```
+
+You have to be careful with colors- there are different palattes available for continuous vs discrete variables, etc. We don't really like the one above because the shades of green are way too close to one another for it to be useful. 
+
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  ) +
+  viridis::scale_color_viridis(discrete = TRUE)
+```
+
+So, why viridis? It works for folks with various kinds of color blindness, and even in grayscale!
 
 

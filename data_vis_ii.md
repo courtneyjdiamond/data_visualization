@@ -78,3 +78,104 @@ weather_df
     ##  9 CentralPark_NY USW00094728 2021-01-09     0   2.8  -4.3
     ## 10 CentralPark_NY USW00094728 2021-01-10     0   5    -1.6
     ## # ℹ 2,180 more rows
+
+## Sample plot from last time, but let’s change some labels.
+
+``` r
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  )
+```
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-3-1.png" width="90%" />
+
+## Let’s start to look at scales!
+
+``` r
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  ) +
+  scale_x_continuous(
+    breaks = c(-15, 0, 15), 
+    labels = c("-15C", "0C", "15C")
+  ) + 
+  scale_y_continuous(
+    position = "right", 
+    trans = "sqrt", 
+    limits = c(0,30)
+  )
+```
+
+    ## Warning in self$trans$transform(x): NaNs produced
+
+    ## Warning: Transformation introduced infinite values in continuous y-axis
+
+    ## Warning: Removed 302 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-4-1.png" width="90%" />
+
+Above, we have a couple options for when/where we transform the data and
+limiting the data we plot. We could do this with a filter or mutate
+function before we plot.
+
+## What about colors?
+
+``` r
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  ) +
+  scale_color_hue(h = c(100, 200))
+```
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-5-1.png" width="90%" />
+
+You have to be careful with colors- there are different palattes
+available for continuous vs discrete variables, etc. We don’t really
+like the one above because the shades of green are way too close to one
+another for it to be useful.
+
+``` r
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Temperature plot",
+    x = "Min daily temp in deg C",
+    y = "Max daily temp in deg C", 
+    color = "Location",
+    caption = "Max vs min daily temp from three locations; data from NOAA"
+  ) +
+  viridis::scale_color_viridis(discrete = TRUE)
+```
+
+    ## Warning: Removed 17 rows containing missing values (`geom_point()`).
+
+<img src="data_vis_ii_files/figure-gfm/unnamed-chunk-6-1.png" width="90%" />
+
+So, why viridis? It works for folks with various kinds of color
+blindness, and even in grayscale!
